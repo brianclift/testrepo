@@ -1,0 +1,286 @@
+<apex:page standardController="Account" docType="html-5.0" id="Merchant" standardStyleSheets="false" showHeader="false" title="Merchant" extensions="AccountMiniPageController" >
+
+  <apex:includeScript value="{!URLFOR($Resource.RevealSoftResources,'js/jquery.min.js')}"/>   
+  <apex:stylesheet value="{!URLFOR($Resource.RevealSoftResources, 'css/jquery-ui.css')}" />  
+  <apex:includeScript value="{!URLFOR($Resource.RevealSoftResources, 'js/bootstrap.min.js')}"/>  
+  <apex:stylesheet value="{!URLFOR($Resource.RevealSoftResources, 'css/bootstrap.min.css')}" />
+  <apex:stylesheet value="{!URLFOR($Resource.RevealSoftResources, 'css/bootstrap-theme.min.css')}" /> 
+  
+  <script type="text/javascript">
+      var j$ = jQuery.noConflict();
+      
+      function setCategoryCodeBySelectList(selectedValue) { 
+        j$('input[id$=MerchantCategoryCodeValidationMessage]').html('');
+        j$('input[id$=MerchantCategoryCodeEdit]').val(selectedValue);
+      }           
+  </script> 
+  
+  <style>
+    .form-group{font-size: 81%; font-family: Arial,Helvetica,sans-serif; margin-bottom: 5px;}
+    .form-control{ font-size:95%; font-family: Arial,Helvetica,sans-serif;}
+    .table{font-size: 91%; font-family: Arial,Helvetica,sans-serif;}
+    .btn{font-size: 91%; font-family: Arial,Helvetica,sans-serif;}
+  </style>
+  
+  <apex:form >
+    <apex:actionFunction action="{!selectMerchantIndustry}" status="status" name="selectMerchantIndustry" rerender="MerchantCategoryCodeValidationMessage,merchantCategoryPanel,MerchantCategoryCodePanel,errorMessages,newQuote" immediate="true">
+        <apex:param name="merchantIndustry" assignTo="{!merchantIndustry}" value="" />
+    </apex:actionFunction>
+    
+    <apex:actionFunction action="{!validateMerchantCategoryCode}" status="status" name="validateMerchantCategoryCode"
+               rerender="merchantCategoryPanel,merchantIndustryPanel,MerchantCategoryCodePanel,MerchantCategoryCodeValidationMessage,errorMessages,newQuote" immediate="true">
+      <apex:param name="merchantCategoryCode" assignTo="{!theMerchant.merchantCategoryCode}" value="" />
+    </apex:actionFunction>  
+    
+    <apex:actionFunction name="deleteQuote" action="{!deleteQuote}"
+           rerender="QuoteListTable,quoteMenu,errorMessages,newQuote" immediate="true" status="status">
+      <apex:param name="selectedQuoteId" assignTo="{!selectedQuoteId}" value="" />
+    </apex:actionFunction>   
+    
+    <apex:actionFunction name="cloneQuote" action="{!cloneQuote}"
+                    rerender="QuoteListTable,quoteMenu,errorMessages,newQuote" immediate="true" status="status">
+      <apex:param name="selectedQuoteId" assignTo="{!selectedQuoteId}" value="" />
+    </apex:actionFunction>  
+    
+    <apex:actionFunction name="saveOtherMerchantProvider" action="{!saveOtherMerchantProvider}"
+                    rerender="MerchantProviderEdit,otherMerchantPanel,errorMessages,newQuote" immediate="true" status="status">
+      <apex:param name="otherMerchantProvider" assignTo="{!otherMerchantProvider}" value="" />
+    </apex:actionFunction> 
+    
+    <apex:actionFunction name="noop" rerender="noop" immediate="true" status="status"/>              
+  </apex:form>
+  
+  <apex:pageMessages id="errorMessages"/>
+  <apex:form styleClass="form-horizontal" >   
+    <div class="panel panel-primary" style="margin-top:20px;"> 
+      <div class="panel-heading">RevealSoft Merchant Information</div>            
+      <div class="panel-body">   
+        <div class="form-group">                        
+          <label class="col-xs-2 control-label">Legal Entity Name:</label>
+          
+          <div class="col-xs-4">
+            <apex:actionRegion >
+              <apex:inputField styleClass="form-control" value="{!theAccount.Legal_Name__c}" id="LegalName" label="Legal Entity Name" >
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="LegalName, errorMessages,newQuote"/> 
+              </apex:inputField>
+            </apex:actionRegion>                                                                         
+          </div> 
+          <label class="col-xs-2 control-label">Merchant Industry Segment:</label>
+          
+          <div class="col-xs-4" >
+            <apex:outputPanel id="merchantIndustryPanel">
+              <apex:actionRegion >
+                <apex:selectList style="background: antiquewhite;" styleClass="form-control" value="{!merchantIndustry}" label="Merchant Industry Segment" id="MerchantIndustrySegmentEdit" size="1" onChange="selectMerchantIndustry(this.value);">
+                  <apex:selectOptions value="{!merchantIndustries}" />
+                </apex:selectList>
+              </apex:actionRegion>
+            </apex:outputPanel> 
+          </div>                                                                   
+        </div>                        
+                      
+        <div class="form-group">   
+          <label class="col-xs-2 control-label">Number of US Locations:</label> 
+          
+          <div class="col-xs-4" >
+            <apex:actionRegion >
+              <apex:inputField styleClass="form-control" value="{!theAccount.Number_of_Locations__c}" id="LocationCount" label="Num of US Locations" >
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="LocationCount,errorMessages,newQuote"/> 
+              </apex:inputField>
+            </apex:actionRegion>                                                                         
+          </div> 
+          
+          <label class="col-xs-2 control-label">Merchant Category:</label>
+          
+          <div class="col-xs-4" >
+            <apex:outputPanel id="merchantCategoryPanel">
+              <apex:actionRegion >
+                <apex:selectList style="background: antiquewhite;" styleClass="form-control" value="{!theAccount.Merchant_Industry_Segment__c}" label="Merchant Category" id="MerchantCategoryEdit" size="1" >
+                  <apex:selectOptions value="{!merchantSegments}" />
+                  <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="MerchantCategoryCodeValidationMessage,errorMessages,newQuote" oncomplete="setCategoryCodeBySelectList(this.value);"/>
+                </apex:selectList>
+              </apex:actionRegion>                           
+            </apex:outputPanel> 
+          </div>               
+                                       
+
+        </div>
+              
+        <div class="form-group">                        
+          <label class="col-xs-2 control-label">{!merchantChannelLabel}:</label>
+          <div class="col-xs-4" >
+            <apex:actionRegion >
+              <apex:selectList styleClass="form-control" value="{!theAccount.Merchant_Channel__c}" label="{!$Label.Merchant_Channel}" id="MerchantChannelEdit" size="1">
+                <apex:selectOptions value="{!merchantChannels}" />
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="MerchantChannelEdit,errorMessages,newQuote"/>
+              </apex:selectList>
+            </apex:actionRegion>                                                                
+          </div>  
+          
+          <label class="col-xs-2 control-label">Merchant Category Code:</label>
+          
+          <div class="col-xs-4" >
+            <apex:outputPanel id="MerchantCategoryCodePanel">
+              <apex:input style="background: antiquewhite;" type="text" styleClass="form-control" value="{!merchantCategoryCode}" id="MerchantCategoryCodeEdit" label="Merchant Category Code" onChange="validateMerchantCategoryCode(this.value);" />                           
+            </apex:outputPanel> 
+            <apex:outputPanel id="MerchantCategoryCodeValidationMessage">                                
+              <apex:outputText rendered="{!showMerchantCategoryCodeValidationMessage}" value='*** <b style="color: #FF0000">Invalid Merchant Category Code, please re-enter or select from list above</b> ***' escape="false" />                                     
+              <apex:outputPanel rendered="{!NOT(ISBLANK(merchantCategoryMessage))}">
+                <apex:outputLabel style="color:red;" value="{!merchantCategoryMessage}"/>
+              </apex:outputPanel>                                 
+              <apex:outputPanel rendered="{!prohibited}"> 
+                <apex:outputLabel style="color:red;" value="Prohibited MCC"/>
+              </apex:outputPanel>                                                                       
+            </apex:outputPanel>                            
+          </div>                                                       
+        </div>     
+                      
+        <div class="form-group">   
+          <label class="col-xs-2 control-label">Current Merchant Provider:</label>
+          <div class="col-xs-4" >
+            <apex:actionRegion >
+              <apex:selectList styleClass="form-control" value="{!theAccount.Merchant_Provider__c}" label="Current Merchant Provider" id="MerchantProviderEdit" size="1" >
+                <apex:selectOptions value="{!merchantProviders}" />
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="otherMerchantPanel,errorMessages,newQuote"/>                
+              </apex:selectList> 
+            </apex:actionRegion>                                                                   
+          </div>                                
+          
+          <label class="col-xs-2 control-label">Merchant Type:</label>
+          <div class="col-xs-4">
+            <apex:actionRegion >
+              <apex:selectList styleClass="form-control" value="{!theAccount.Merchant_Type__c}" label="Merchant Type" id="MerchantTypeEdit" size="1">
+                <apex:selectOptions value="{!merchantTypes}" />
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="MerchantTypeEdit,errorMessages,newQuote"/>
+              </apex:selectList> 
+            </apex:actionRegion>                                                             
+          </div>                                                         
+        </div>                           
+                      
+        <div class="form-group">                                  
+          <apex:outputPanel id="otherMerchantPanel">             
+            <apex:outputPanel rendered="{!theAccount.Merchant_Provider__r.Name == 'Other - Not Listed'}">                        
+              <label class="col-xs-2 control-label">Other Merchant Provider:</label>
+              <div class="col-xs-3" >          
+                <apex:inputText styleClass="form-control" value="{!otherMerchantProvider}" id="otherMerchantProvider" label="Other Merchant Provider" />&nbsp;
+              </div> 
+              <div class="col-xs-1" > 
+                <span style="cursor: pointer; padding-top:7px; font-size: 14px; font-weight: 900; color: blue;" title="Create New Merchant Provider" onclick="saveOtherMerchantProvider(j$('input[id$=otherMerchantProvider]').val());" class="glyphicon glyphicon-plus" aria-hidden="true"></span>                                
+              </div>
+            </apex:outputPanel>                                                         
+          </apex:outputPanel>     
+
+          <label class="col-xs-2 control-label">Primary Contact:</label>
+          <div class="col-xs-4">
+            <apex:actionRegion >
+              <apex:selectList styleClass="form-control" value="{!theAccount.Primary_Contact__c}" label="Primary Contact" id="PrimaryContactEdit" size="1">
+                <apex:selectOptions value="{!contactList}" />
+                <apex:actionSupport action="{!save}" event="onchange" status="status" reRender="PrimaryContactEdit,errorMessages,newQuote"/>
+              </apex:selectList> 
+            </apex:actionRegion>                                                             
+          </div>                                                            
+        </div>                                                         
+    </div>
+  </div>     
+  
+  <div class="panel panel-primary" > 
+    <div class="panel-heading">RevealSoft Quotes <div style="margin-top: -7px;float:right; margin-right: 10px;">
+      <apex:outputPanel id="newQuote">
+        <apex:outputLink styleClass="btn btn-default" rendered="{!!ISBLANK(theAccount.Primary_Contact__c) && (!ISBLANK(theAccount.Merchant_Industry_Segment__c) || !featureConfiguration.MCC_Required__c) && !ISBLANK(theAccount.Merchant_Type__c) && !ISBLANK(theAccount.Merchant_Channel__c)}"  onclick="noop(); window.top.location.href='{!$Page.Quote}?merchantId={!theAccount.Id}'; return false;" value="New Quote">New Quote</apex:outputLink>
+        <apex:outputLink styleClass="btn btn-default" rendered="{!ISBLANK(theAccount.Primary_Contact__c) || (ISBLANK(theAccount.Merchant_Industry_Segment__c) && featureConfiguration.MCC_Required__c) || ISBLANK(theAccount.Merchant_Type__c) || ISBLANK(theAccount.Merchant_Channel__c)}"  onclick="j$('#requiredFieldsDialog').modal('show'); return false;" value="New Quote">New Quote</apex:outputLink>
+      </apex:outputPanel>
+    </div>
+  </div>
+             
+    <div class="panel-body">  
+      <apex:outputPanel id="QuoteListTable">                          
+        <div style="clear:both;">
+          <c:paging showPageSize="false" theController="{!AccountMiniPageController}" rerender="QuoteListTable"/>
+        </div>                                                                                                                                                      
+        <table class="table table-striped">
+          <tr>                    
+            <th style="cursor: pointer;" onClick="reOrder('Name');">Quote Name</th>
+            <th style="cursor: pointer; width: 110px;" onClick="reOrder('CreatedDate');">Created Date</th>
+            <th>Products Quoted</th> 
+            <th style="cursor: pointer;" onClick="reOrder('Status__c');">Status</th>
+            <th style="cursor: pointer;" onClick="reOrder('CreatedBy.Name');">Owner</th>
+            <th>Actions</th>
+          </tr>                
+                        
+          <apex:repeat var="theQuote" value="{!quoteSet}">
+            <tr>
+              <td><apex:outputLink value="{!$Page.Quote}" style="text-decoration:none;" onClick="window.top.location.href='{!$Page.Quote}?id={!theQuote.Id}'; return false">{!theQuote.Name}</apex:outputLink></td>
+              <td><apex:outputText value="{0,date,MM/dd/yyyy}"><apex:param value="{!theQuote.CreatedDate}"/></apex:outputText></td>
+              <td>
+                <table>
+                  <tr>
+                    <td width="19" >
+                      <span style="margin-left: {!IF(theQuote.MajorCC__c, '0px', '19px')};">
+                        <apex:outputLink value="/apex/VisaMCDiscoverProduct?id={!theQuote.Id}" onClick="window.top.location.href='/apex/VisaMCDiscoverProduct?id={!theQuote.Id}'; return false" title="Visa / MC / Discover" rendered="{!theQuote.MajorCC__c && NOT(featureConfiguration.Visa_BET_Enabled__c)}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + visaProductImage)}"/></apex:outputLink>
+                        <apex:outputLink value="/apex/VisaMCDiscoverBETProduct?id={!theQuote.Id}" onClick="window.top.location.href='/apex/VisaMCDiscoverBETProduct?id={!theQuote.Id}'; return false" title="Visa / MC / Discover" rendered="{!theQuote.MajorCC__c && featureConfiguration.Visa_BET_Enabled__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + visaProductImage)}"/></apex:outputLink>
+                      </span>
+                    </td>
+                    <td width="19" >
+                      <span style="margin-left: {!IF(theQuote.Amercan_Express__c || theQuote.OptBlue_Enabled__c, '0px', '19px')};">
+                        <apex:outputLink value="/apex/AmexProduct?id={!theQuote.Id}" onClick="window.top.location.href='/apex/AmexProduct?id={!theQuote.Id}'; return false" title="AmEx OnePoint" rendered="{!theQuote.Amercan_Express__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + amexProductImage)}"/></apex:outputLink>
+                        <apex:outputLink value="/apex/OptBlueProduct?id={!theQuote.Id}" onClick=" window.top.location.href='/apex/OptBlueProduct?id={!theQuote.Id}'; return false" title="AmEx OptBlue" rendered="{!theQuote.OptBlue_Enabled__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + amexProductImage)}"/></apex:outputLink>
+                      </span>
+                    </td>
+                    <td width="19" ><span style="margin-left: {!IF(theQuote.PIN_Debit__c, '0px', '19px')};"><apex:outputLink value="/apex/PINDebitProduct?id={!theQuote.Id}" onClick="window.top.location.href='/apex/PINDebitProduct?id={!theQuote.Id}'; return false" title="PIN / Debit" rendered="{!theQuote.PIN_Debit__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + pinDebitProductImage)}"/></apex:outputLink></span></td>
+                    <td width="19" ><span style="margin-left: {!IF(theQuote.POS__c, '0px', '19px')};"><apex:outputLink value="/apex/POSProduct?id={!theQuote.Id}" onClick=" window.top.location.href='/apex/POSProduct?id={!theQuote.Id}'; return false" title="POS Solutions" ><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + posProductImage)}"/></apex:outputLink></span></td>
+                    <td width="19"><span style="margin-left: {!IF(theQuote.Gift_Card__c, '0px', '19px')};"><apex:outputLink value="/apex/GiftCardProduct?id={!theQuote.Id}" onClick=" window.top.location.href='/apex/GiftCardProduct?id={!theQuote.Id}'; return false" title="Gift Card Services" rendered="{!theQuote.Gift_Card__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + giftCardProductImage)}"/></apex:outputLink></span></td>
+                    <td width="19"><span style="margin-left: {!IF(theQuote.Reporting__c, '0px', '19px')};"><apex:outputLink value="/apex/ReportProduct?id={!theQuote.Id}" onClick=" window.top.location.href='/apex/ReportProduct?id={!theQuote.Id}'; return false" title="Reporting" rendered="{!theQuote.Reporting__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + reportProductImage)}"/></apex:outputLink></span></td>
+                    <td width="19"><span style="margin-left: {!IF(theQuote.Dynamic_Currency_Conversion__c, '0px', '19px')};"><apex:outputLink value="/apex/DCCProduct?id={!theQuote.Id}" onClick=" window.top.location.href='/apex/DCCProduct?id={!theQuote.Id}'; return false" title="Dynamic Currency Conversion" rendered="{!theQuote.Dynamic_Currency_Conversion__c}"><apex:image height="16" width="19"  value="{!URLFOR($Resource.RevealSoftResources, 'images/' + dccProductImage)}"/></apex:outputLink></span></td>                                                   
+                  </tr>
+                </table>
+              </td>
+              <td>
+                <apex:image title="Quote Approved" rendered="{!theQuote.Approval_Status__c == 'Approved'}" height="16" width="19" value="{!URLFOR($Resource.RevealSoftResources, 'images/accept.jpg')}"/>
+                <apex:image title="Quote Rejected" rendered="{!theQuote.Approval_Status__c == 'Rejected'}" height="16" width="19" value="{!URLFOR($Resource.RevealSoftResources, 'images/reject.jpg')}"/>
+                {!theQuote.Status__c}
+              </td>  
+              <td>{!theQuote.Merchant__r.Owner.Name}</td>
+              <td style="width:90px;">
+                <a style="cursor: pointer;" value="{!$Page.Quote}?id={!theQuote.Id}" onClick=" window.top.location.href='{!$Page.Quote}?id={!theQuote.Id}'; return false"><span data-toggle="tooltip" title="Edit Quote" class="glyphicon glyphicon-pencil" aria-hidden="true"/> </a>
+                <a style="cursor: pointer;" onClick="cloneQuote('{!theQuote.Id}'); return false;"><span class="glyphicon glyphicon-copy" data-toggle="tooltip" title="Copy Quote" aria-hidden="true"/></a>                
+                <a style="cursor: pointer;" onClick="if (window.confirm('Are you sure you wish to delete this quote?')) { deleteQuote('{!theQuote.Id}'); } return false;" ><span data-toggle="tooltip" title="Delete Quote" class="glyphicon glyphicon-trash" aria-hidden="true"/></a>
+              </td>                   
+            </tr>                                                                                                                 
+          </apex:repeat>    
+        </table>                        
+      </apex:outputPanel>       
+    </div>                  
+  </div>
+  </apex:form>
+  
+  <apex:actionstatus id="status">
+    <apex:facet name="start">
+      <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;  height: 100%;opacity:0.65;width:100%;"> 
+        <div class="waitingHolder" style="width: 32px;left:50%;top: 30%; position:fixed;">
+          <img class="waitingImage" src="/img/loading32.gif" title="Please Wait..." />
+        </div> 
+      </div>
+    </apex:facet>
+  </apex:actionstatus>  
+  
+  <apex:outputPanel id="emptyPanel"/>   
+  
+   <!-- Required Fields Dialog -->
+  <div class="modal fade" id="requiredFieldsDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Please enter all required fields</h4>
+          </div>   
+         
+          <div class="modal-body"> 
+            Please provide the Primary Contact, {!IF(featureConfiguration.MCC_Required__c, 'Merchant Category,','')} Merchant Type and Merchant Channel / Partner.                                                                
+          </div>
+          <div class="modal-footer">       
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+          </div>
+        </div>            
+    </div>
+  </div>               
+           
+</apex:page>

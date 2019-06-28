@@ -1,0 +1,32 @@
+<apex:component >
+    <apex:attribute name="quoteController"
+        description="RevealSoft Quote Controller" type="QuoteController"
+        required="true" />
+    <apex:outputPanel id="otherMessages" > 
+    <apex:outputPanel id="approvalMessages" rendered="{!quoteController.profitability.isPending}">            
+      <div class="message-box-wrapper red" style="margin-top: 20px; border-radius: 5px;" >
+        <div class="message-box-title" style="color: #C00;">Profitability threshold not met, this quote is currently under approval review.</div>
+        <div class="message-box-content">
+            <ul>
+              <apex:repeat var="profitMessage" value="{!quoteController.profitability.approvalMessages}">
+                <li><apex:outputText value="{!profitMessage}"/></li> 
+              </apex:repeat>
+            </ul>
+        </div>  
+      </div> 
+    </apex:outputPanel> 
+    
+    <apex:outputPanel id="VMDThresholdMessages" rendered="{!quoteController.hasVMDThresholdMessages}">            
+      <div class="message-box-wrapper red" style="margin-top: 20px; border-radius: 5px;" >
+        <div class="message-box-title" style="color: #C00;">Manager Approval Required.</div>
+        <div class="message-box-content">
+            <ul>
+              <apex:repeat var="profitMessage" value="{!quoteController.VMDThresholdMessages}">
+                <li><apex:outputText value="{!profitMessage}"/></li> 
+              </apex:repeat>
+            </ul>
+        </div>  
+      </div> 
+    </apex:outputPanel>   
+    </apex:outputPanel>     
+</apex:component>
